@@ -6,6 +6,7 @@
 using namespace sf;
 using namespace std;
 
+
 class Player
 {
 	Text t;
@@ -50,7 +51,6 @@ public:
 
 vector<Player> playersVec;
 
-vector<Client> clientsVec;
 
 Clock cycleTimer, dataSendTimer;
 Time cycleTime;
@@ -62,54 +62,38 @@ IpAddress serverIp;
 string clientName;
 Uint16 regServerPort;
 Uint16 dataServerPort;
+
+void getUserInputData();
+void loadResources(Texture& t, Font& f);
 void bindSockets();
+void connectRegTcpSocket();
+void sendDataUdpPort();
+void recieveDataServerPort();
+
 
 int main()
 {
 	RenderWindow window(sf::VideoMode(400, 400), "SFML works!");
 
-	cout << "Enter server IP: ";
-	cin >> serverIp;
-	cout << endl;
-	cout << "Enter server registration port: ";
-	cin >> regServerPort;
-	cout << endl;
-	cout << "Enter name: ";
-	cin >> clientName;
-
 	Texture t_player;
 	Font font;
-	t_player.loadFromFile("tank.png");
-	font.loadFromFile("8bitOperatorPlus-Regular.ttf");
+
+	getUserInputData();
+
+	loadResources(t_player, font);
 
 	Player player(true);
 	player.load(t_player, font, clientName);
 
 
-
 	bindSockets();
 
-	if (regSocket.connect(serverIp, regServerPort) == Socket::Status::Done)
-		cout << ">>Registration socket connected to server!\n";
-	else cout << "!!!Registration socket connection error!!!\n";
+	connectRegTcpSocket();
 
-	sPacket << dataSocket.getLocalPort() << clientName;
+	sendDataUdpPort();
 
-	if (regSocket.send(sPacket) == Socket::Status::Done)
-	{
-		cout << ">>Successfully sent data socket port to server\n";
-		sPacket.clear();
-	}
-	else cout << "!!!Sending data socket port to server failed!!!\n";
-
-
-	if (regSocket.receive(rPacket) == Socket::Status::Done)
-	{
-		rPacket >> dataServerPort;
-		cout << ">>Successfully received data socket port of a server: " << dataServerPort << endl;
-		rPacket.clear();
-	}
-	else cout << "!!!Failed to receive data socket port of a server!!!\n";
+	recieveDataServerPort();
+	
 
 	if (regSocket.receive(rPacket) == Socket::Status::Done)
 	{
@@ -254,11 +238,58 @@ int main()
 	}
 
 	return 0;
-}
+};
 
 void bindSockets()
 {
 	if (dataSocket.bind(Socket::AnyPort) == sf::Socket::Done)
 		cout << ">>Data socket binded successfully to port: " << dataSocket.getLocalPort() << endl;
 	else cout << "!!!Data socket bind error!!!\n";
-}
+};
+
+void getUserInputData()
+{
+	cout << "Enter server IP: ";
+	cin >> serverIp;
+	cout << endl;
+	cout << "Enter server registration port: ";
+	cin >> regServerPort;
+	cout << endl;
+	cout << "Enter name: ";
+	cin >> clientName;
+};
+
+void connectRegTcpSocket()
+{
+	if (regSocket.connect(serverIp, regServerPort) == Socket::Status::Done)
+		cout << ">>Registration socket connected to server!\n";
+	else cout << "!!!Registration socket connection error!!!\n";
+};
+
+void sendDataUdpPort()
+{
+	sPacket << dataSocket.getLocalPort() << clientName;
+	if (regSocket.send(sPacket) == Socket::Status::Done)
+		cout << ">>Successfully sent data udp socket port to server\n";
+	else cout << "!!!Sending data udp socket port to server failed!!!\n";
+
+	sPacket.clear();
+};
+
+void loadResources(Texture& t, Font& f)
+{
+	t.loadFromFile("tank.png");
+	f.loadFromFile("8bitOperatorPlus-Regular.ttf");
+};
+
+void recieveDataServerPort()
+{
+	if (regSocket.receive(rPacket) == Socket::Status::Done)
+	{
+		rPacket >> dataServerPort;
+		cout << ">>Successfully received data dedicated socket port of a server: " << dataServerPort << endl;
+	}
+	else cout << "!!!Failed to receive dedicated data socket port of a server!!!\n";
+
+	rPacket.clear();
+};

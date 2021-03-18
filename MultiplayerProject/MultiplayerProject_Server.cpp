@@ -45,7 +45,7 @@ int main()
 
 	while (true)
 	{
-		if (selector.wait(milliseconds(30)))
+		if (selector.wait(milliseconds(200)))
 		{
 			for (int i = 0; i < clientsVec.size(); i++)
 			{
