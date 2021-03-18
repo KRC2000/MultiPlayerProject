@@ -6,11 +6,6 @@
 using namespace sf;
 using namespace std;
 
-struct Client
-{
-	string name;
-};
-
 class Player
 {
 	Text t;
