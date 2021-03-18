@@ -13,6 +13,7 @@ struct Client
 	Uint16 port;
 	UdpSocket* serverDataSocket;
 	Vector2f pos{0,0};
+	Clock lastPacketTimer;
 };
 
 vector<Client> clientsVec;
@@ -50,6 +51,7 @@ int main()
 			{
 				if (selector.isReady(*clientsVec[i].serverDataSocket))
 				{
+					clientsVec[i].lastPacketTimer.restart();
 					packet.clear();
 					if (clientsVec[i].serverDataSocket->receive(packet, clientsVec[i].ip, clientsVec[i].port) == Socket::Status::Done)
 					{
@@ -155,6 +157,30 @@ int main()
 			}
 			dataBroadcastTimer.restart();
 			packet.clear();
+
+
+			for (int i = 0; i < clientsVec.size(); i++)
+			{
+				if (clientsVec[i].lastPacketTimer.getElapsedTime().asSeconds() > 10)
+				{
+					packet.clear();
+					packet << "DC" << clientsVec[i].name;
+
+					cout << ">>Player " << clientsVec[i].name << " disconnected.\n";
+					selector.remove(*clientsVec[i].serverDataSocket);
+					delete clientsVec[i].serverDataSocket;
+					clientsVec[i].serverDataSocket = nullptr;
+					clientsVec.erase(clientsVec.begin() + i);
+
+
+					for (int i = 0; i < clientsVec.size(); i++)
+					{
+						clientsVec[i].serverDataSocket->send(packet, clientsVec[i].ip, clientsVec[i].port);
+					}
+					break;
+				}
+
+			}
 	}
 
 

@@ -167,6 +167,22 @@ int main()
 						else cout << "!!!Reading data error!!!\n";
 					}
 
+					if (s == "DC")
+					{
+						if (rPacket >> s)
+						{
+							for (int i = 0; i < playersVec.size(); i++)
+							{
+								if (playersVec[i].name == s)
+								{
+									playersVec.erase(playersVec.begin() + i);
+									break;
+									cout << ">>" << s << " disconnected from the server.\n";
+								}
+							}
+						}
+					}
+
 					if (s == "DATA")
 					{
 						while (!rPacket.endOfPacket())
@@ -212,7 +228,6 @@ int main()
 		}
 
 		Event event;
-		window.setKeyRepeatEnabled(false);
 		while (window.pollEvent(event))
 		{
 			if (event.type == sf::Event::Closed)
