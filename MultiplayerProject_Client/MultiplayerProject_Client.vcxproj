@@ -143,6 +143,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MultiplayerProject_Client.cpp" />
+    <ClCompile Include="NetworkClient.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="NetworkClient.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
