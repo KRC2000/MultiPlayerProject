@@ -160,7 +160,7 @@ int main()
 			packet.clear();
 		}
 
-		/*for (int i = 0; i < clientsVec.size(); i++)
+		for (int i = 0; i < clientsVec.size(); i++)
 		{
 			if (clientsVec[i].lastPacketTimer.getElapsedTime().asSeconds() > 10)
 			{
@@ -181,7 +181,7 @@ int main()
 				break;
 			}
 
-		}*/
+		}
 	}
 
 
