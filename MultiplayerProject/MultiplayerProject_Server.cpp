@@ -38,6 +38,7 @@ int main()
 	
 	selector.add(listener);
 	
+	
 
 	packet.clear();
 
@@ -45,7 +46,7 @@ int main()
 
 	while (true)
 	{
-		if (selector.wait(milliseconds(200)))
+		if (selector.wait(milliseconds(1)))
 		{
 			for (int i = 0; i < clientsVec.size(); i++)
 			{
@@ -92,9 +93,6 @@ int main()
 						clientsVec.back().serverDataSocket = new UdpSocket;
 						clientsVec.back().serverDataSocket->bind(Socket::AnyPort);
 						selector.add(*clientsVec.back().serverDataSocket);
-						if (clientsVec.back().serverDataSocket->bind(Socket::AnyPort) == sf::Socket::Done)
-							cout << ">>New server-client data socket binded successfully to port: " << clientsVec.back().serverDataSocket->getLocalPort() << endl;
-						else cout << "!!!server-client data socket bind error!!!\n";
 
 						cout << ">>Client record created: " << clientsVec.back().ip << ":" << clientsVec.back().port << " " << clientsVec.back().name << endl;
 						packet.clear();
@@ -142,45 +140,48 @@ int main()
 			}
 		}
 
-
+		if (dataBroadcastTimer.getElapsedTime().asMilliseconds() > 8)
+		{
 			packet.clear();
 			for (int i = 0; i < clientsVec.size(); i++)
 			{
-				packet << "DATA";
 				for (int n = 0; n < clientsVec.size(); n++)
 				{
+					packet << "DATA";
 					if (n != i)
+					{
 						packet << clientsVec[n].name << clientsVec[n].pos.x << clientsVec[n].pos.y;
+						clientsVec[i].serverDataSocket->send(packet, clientsVec[i].ip, clientsVec[i].port);
+					}
 				}
-				clientsVec[i].serverDataSocket->send(packet, clientsVec[i].ip, clientsVec[i].port);
 				packet.clear();
 			}
 			dataBroadcastTimer.restart();
 			packet.clear();
+		}
 
-
-			for (int i = 0; i < clientsVec.size(); i++)
+		/*for (int i = 0; i < clientsVec.size(); i++)
+		{
+			if (clientsVec[i].lastPacketTimer.getElapsedTime().asSeconds() > 10)
 			{
-				if (clientsVec[i].lastPacketTimer.getElapsedTime().asSeconds() > 10)
+				packet.clear();
+				packet << "DC" << clientsVec[i].name;
+
+				cout << ">>Player " << clientsVec[i].name << " disconnected.\n";
+				selector.remove(*clientsVec[i].serverDataSocket);
+				delete clientsVec[i].serverDataSocket;
+				clientsVec[i].serverDataSocket = nullptr;
+				clientsVec.erase(clientsVec.begin() + i);
+
+
+				for (int i = 0; i < clientsVec.size(); i++)
 				{
-					packet.clear();
-					packet << "DC" << clientsVec[i].name;
-
-					cout << ">>Player " << clientsVec[i].name << " disconnected.\n";
-					selector.remove(*clientsVec[i].serverDataSocket);
-					delete clientsVec[i].serverDataSocket;
-					clientsVec[i].serverDataSocket = nullptr;
-					clientsVec.erase(clientsVec.begin() + i);
-
-
-					for (int i = 0; i < clientsVec.size(); i++)
-					{
-						clientsVec[i].serverDataSocket->send(packet, clientsVec[i].ip, clientsVec[i].port);
-					}
-					break;
+					clientsVec[i].serverDataSocket->send(packet, clientsVec[i].ip, clientsVec[i].port);
 				}
-
+				break;
 			}
+
+		}*/
 	}
 
 
@@ -190,10 +191,6 @@ int main()
 
 void bindSockets()
 {
-	/*if (dataSocket.bind(Socket::AnyPort) == sf::Socket::Done)
-		cout << ">>Data socket binded successfully to port: " << dataSocket.getLocalPort() << endl;
-	else cout << "!!!Data socket bind error!!!\n";*/
-
 	if (listener.listen(Socket::AnyPort) == Socket::Done)
 		cout << ">>Listener binded successfully to port: " << listener.getLocalPort() << endl;
 	else cout << "!!!Listener socket bind error!!!\n"; 
