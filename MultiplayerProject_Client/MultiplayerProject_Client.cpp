@@ -127,7 +127,9 @@ int main()
 
 		dataSocket.setBlocking(false);
 
-		if (dataSocket.receive(rPacket, serverIp, dataServerPort) == Socket::Status::Done)
+		IpAddress tempIp = serverIp;
+		Uint16 tempPort = dataServerPort;
+		if (dataSocket.receive(rPacket, tempIp, tempPort) == Socket::Status::Done)
 		{
 			string s;
 			if (!rPacket.endOfPacket())
@@ -189,15 +191,16 @@ int main()
 
 		//dataSocket.setBlocking(true);
 		
-		if (dataSendTimer.getElapsedTime().asMilliseconds() > 15)
+		if (dataSendTimer.getElapsedTime().asMilliseconds() > 1000 / 120)
 		{
 			if (sPacket.getDataSize() == 0)
 			{
 				sPacket << player.getPos().x << player.getPos().y;
-				cout << "x";
 			}
 
-			if (dataSocket.send(sPacket, serverIp, dataServerPort) == Socket::Status::Done)
+			IpAddress tempIp = serverIp;
+			Uint16 tempPort = dataServerPort;
+			if (dataSocket.send(sPacket, tempIp, tempPort) == Socket::Status::Done)
 			{
 				cout << "Done: " << dataSendTimer.getElapsedTime().asMilliseconds() << endl;
 				//cout << "Size: " << sPacket.getDataSize() << endl << endl;
@@ -249,8 +252,9 @@ void bindSockets()
 
 void getUserInputData()
 {
-	cout << "Enter server IP: ";
-	cin >> serverIp;
+	//cout << "Enter server IP: ";
+	//cin >> serverIp;
+	serverIp = "localhost";
 	cout << endl;
 	cout << "Enter server registration port: ";
 	cin >> regServerPort;
