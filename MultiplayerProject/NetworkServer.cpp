@@ -13,7 +13,7 @@ Socket::Status NetworkServer::acceptIncomingConnection()
 		if (listener.accept(regSocket) == Socket::Status::Done)
 		{
 			cout << "acceptIncomingConnection(): Accepted new connection\n";
-			regStep++;
+			regStep = 1;
 			return Socket::Status::Done;
 		}
 		else return Socket::Status::NotReady;
@@ -24,7 +24,7 @@ Socket::Status NetworkServer::receiveClientRegData()
 {
 	if (regStep == 1)
 	{
-		if (listener.isBlocking()) listener.setBlocking(false);
+		if (regSocket.isBlocking()) regSocket.setBlocking(false);
 
 		if (regSocket.receive(packet) == Socket::Status::Done)
 		{
@@ -68,9 +68,74 @@ Socket::Status NetworkServer::receiveClientRegData()
 			}
 
 			cout << "receiveClientRegData(): Client registration data received\n";
-			regStep++;
+			regStep = 2;
+			packet.clear();
 			return Socket::Status::Done;
 		}
 		else return Socket::Status::NotReady;
 	}
+}
+
+Socket::Status NetworkServer::sendDedicatedDataPort()
+{
+	if (regStep == 2)
+	{
+		if (regSocket.isBlocking()) regSocket.setBlocking(false);
+
+		if (packet.getDataSize() == 0)
+			packet << static_cast<Uint16>(clientsVec.back().dataSocket->getLocalPort());
+
+		if (regSocket.send(packet) == Socket::Status::Done)
+		{
+			cout << "sendDedicatedDataPort(): Dedicated data port sent\n";
+			regStep = 3;
+			return Socket::Status::Done;
+		}
+		else return Socket::Status::NotReady;
+	}
+}
+
+Socket::Status NetworkServer::sendConnectedClientsRecords()
+{
+	if (regStep = 3)
+	{
+		if (regSocket.isBlocking()) regSocket.setBlocking(false);
+
+		if (packet.getDataSize() == 0)
+		{
+			if (clientsVec.size() > 1)
+			{
+				for (int i = 0; i < clientsVec.size() - 1; i++)
+					packet << clientsVec[i].name;
+			}
+			else packet << "FIRST";
+		}
+
+		if (regSocket.send(packet) == Socket::Status::Done)
+		{
+			cout << "sendConnectedClientsRecords(): Connected clients records sent to new client\n";
+			regStep = 0;
+			regSocket.disconnect();
+			return Socket::Status::Done;
+		}
+		else return Socket::Status::NotReady;
+	}
+}
+
+Socket::Status NetworkServer::receiveData(Client* clientReceivedFrom)
+{
+	for (int i = 0; i < clientsVec.size(); i++)
+	{
+		if (clientsVec[i].dataSocket->isBlocking()) clientsVec[i].dataSocket->setBlocking(false);
+		IpAddress tempIp = clientsVec[i].Ip;
+		unsigned short tempPort = clientsVec[i].port;
+
+		if (clientsVec[i].dataSocket->receive(clientsVec[i].dataPacket, tempIp, tempPort) == Socket::Status::Done)
+		{
+			clientReceivedFrom = &clientsVec[i];
+			return Socket::Status::Done;
+		}
+	}
+
+	return Socket::Status::NotReady;
 }
