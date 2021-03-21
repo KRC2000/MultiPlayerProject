@@ -6,14 +6,15 @@
 using namespace std;
 using namespace sf;
 
+/*Object for managing connection to the server that handles connection using NetworkServer*/
 class NetworkClient
 {
 	UdpSocket dataSocket;
 	TcpSocket regSocket;
 
 	IpAddress S_Ip;
-	Uint16 S_regPort;
-	Uint16 S_dataPort;
+	unsigned short S_regPort;
+	unsigned short S_dataPort;
 public:
 	NetworkClient();
 
@@ -30,5 +31,10 @@ private:
 	/*Sets registration tcp socket to be blocking, then sends using it data udp socket port and network client name to 
 	registration socket of a server, so that server create new dedicated client record*/
 	Socket::Status sendClientRecipientData(string clientName);
+
+	/*NetworkServer creates new udp socket with its own separate port for each client to communicate with that client after registration,
+	receive port dedicated to this client using this method*/
+	Socket::Status recieveDedicatedDataServerPort();
+
 };
 

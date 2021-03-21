@@ -35,6 +35,9 @@ Socket::Status NetworkClient::registerOnServer(IpAddress serverIp, unsigned shor
 
 	if (sendClientRecipientData(clientName) != Socket::Status::Done)
 		return Socket::Status::Error;
+
+	if  (recieveDedicatedDataServerPort() != Socket::Status::Done)
+		return Socket::Status::Error;
 	
 }
 
@@ -42,12 +45,14 @@ Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned s
 {
 	if (regSocket.connect(serverIp, serverRegPort) == Socket::Status::Done)
 	{
-		cout << "registerOnServer()->connectRegTcpSocket(): Connected to server\n";
+		cout << "connectRegTcpSocket(): Connected to server\n";
+		S_Ip = serverIp;
+		S_dataPort = serverRegPort;
 		return Socket::Status::Done;
 	}
 	else
 	{
-		cout << "(!)registerOnServer()->connectRegTcpSocket(): Error connecting to server!\n";
+		cout << "(!)connectRegTcpSocket(): Error connecting to server!\n";
 		return Socket::Status::Error;
 	}
 }
@@ -61,12 +66,40 @@ Socket::Status NetworkClient::sendClientRecipientData(string clientName)
 
 	if (regSocket.send(tempPacket) == Socket::Status::Done)
 	{
-		cout << "registerOnServer()->sendClientRecipientData(): Successfully sent client recipient data\n";
+		cout << "sendClientRecipientData(): Successfully sent client recipient data\n";
 		return Socket::Status::Done;
 	}
 	else
 	{
-		cout << "(!)registerOnServer()->sendClientRecipientData(): Failed to send client recipient data\n";
+		cout << "(!)sendClientRecipientData(): Failed to send client recipient data\n";
 		return Socket::Status::Error;
 	}
+}
+
+Socket::Status NetworkClient::recieveDedicatedDataServerPort()
+{
+	if (!regSocket.isBlocking()) regSocket.setBlocking(true);
+
+	Packet tempPacket;
+
+	if (regSocket.receive(tempPacket) == Socket::Status::Done)
+	{
+		if (tempPacket.getDataSize() > 0)
+		{
+			if (tempPacket.getDataSize() == sizeof(Uint16))
+			{
+				if (tempPacket >> S_dataPort)
+				{
+					cout << "recieveDedicatedDataServerPort(): Successfully received data client-dedicated port of a server - " << S_dataPort << endl;
+					return Socket::Status::Done;
+				}
+				else cout << "(!)recieveDedicatedDataServerPort(): Failed to read from received packet\n";
+			}
+			else cout << "(!)recieveDedicatedDataServerPort(): Invalid packet size, ensure that server sends only Uint16 var\n";
+		}
+		else cout << "(!)recieveDedicatedDataServerPort(): Received packet is empty\n";
+	}
+	else cout << "(!)recieveDedicatedDataServerPort(): Failed to receive client-dedicated port of a server\n";
+
+	return Socket::Status::Error;
 }
