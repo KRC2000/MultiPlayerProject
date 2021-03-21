@@ -32,7 +32,17 @@ public:
 
 	/////// Execute these in main loop ///////
 
-
+	/// <summary>
+	/// Receives data sent by server's udp socket dedicated for connection with this client.
+	/// Receive is NON-blocking.
+	/// When Status::Done returned, you can extract dataPacket.
+	/// Packet dataPacket must exist as long ass this method being called
+	/// </summary>
+	/// <param name="dataPacket"> packet to fill with received data</param>
+	/// <param name="S_Ip"> Server Ip address</param>
+	/// <param name="S_dataPort"> Server data port for connection with this client</param>
+	/// <returns>status code</returns>
+	Socket::Status receiveData(Packet& dataPacket, IpAddress S_Ip, unsigned short S_dataPort);
 
 private:
 	/*Connects registration tcp socket to server registration tcp socket*/

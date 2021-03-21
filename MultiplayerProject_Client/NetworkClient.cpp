@@ -75,6 +75,26 @@ Socket::Status NetworkClient::receiveConnectedClientsNames(vector<string>& names
 	return Socket::Status::Error;
 }
 
+Socket::Status NetworkClient::receiveData(Packet& dataPacket, IpAddress S_Ip, unsigned short S_dataPort)
+{
+	if (dataSocket.isBlocking())dataSocket.setBlocking(false);
+
+	if (dataSocket.receive(dataPacket, S_Ip, S_dataPort) == Socket::Status::Done)
+	{
+		if (dataPacket.getDataSize() > 0)
+		{
+			cout << "receiveData(): Data received\n";
+			return Socket::Status::Done;
+		}
+		else
+		{
+			cout << "(!)receiveData(): Received packet is empty\n";
+			return Socket::Status::Error;
+		}
+	}
+	return Socket::Status::NotReady;
+}
+
 Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned short serverRegPort)
 {
 	if (regSocket.connect(serverIp, serverRegPort) == Socket::Status::Done)
