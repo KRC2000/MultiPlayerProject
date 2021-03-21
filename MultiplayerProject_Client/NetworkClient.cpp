@@ -95,6 +95,24 @@ Socket::Status NetworkClient::receiveData(Packet& dataPacket, IpAddress S_Ip, un
 	return Socket::Status::NotReady;
 }
 
+Socket::Status NetworkClient::sendData(Packet& dataPacket, IpAddress S_Ip, unsigned short S_dataPort)
+{
+	if (dataSocket.isBlocking())dataSocket.setBlocking(false);
+
+	if (dataPacket.getDataSize() < 1)
+	{
+		cout << "(!)sendData(): Error, packet is empty\n";
+		return Socket::Status::Error;
+	}
+
+	if (dataSocket.send(dataPacket, S_Ip, S_dataPort) == Socket::Status::Done)
+	{
+		cout << "sendData(): Data was sent\n";
+		return Socket::Status::Done;
+	}
+	else return Socket::Status::NotReady;
+}
+
 Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned short serverRegPort)
 {
 	if (regSocket.connect(serverIp, serverRegPort) == Socket::Status::Done)
