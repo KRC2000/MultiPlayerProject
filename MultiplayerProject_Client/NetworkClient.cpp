@@ -115,6 +115,8 @@ Socket::Status NetworkClient::sendData(Packet& dataPacket, IpAddress S_Ip, unsig
 
 Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned short serverRegPort)
 {
+	if (!regSocket.isBlocking()) regSocket.setBlocking(true);
+
 	if (regSocket.connect(serverIp, serverRegPort) == Socket::Status::Done)
 	{
 		cout << "connectRegTcpSocket(): Connected to server\n";
@@ -134,7 +136,7 @@ Socket::Status NetworkClient::sendClientRecipientData(string clientName)
 	if (!regSocket.isBlocking()) regSocket.setBlocking(true);
 
 	Packet tempPacket;
-	tempPacket << dataSocket.getLocalPort() << clientName;
+	tempPacket << clientName << static_cast<Uint16>(dataSocket.getLocalPort());
 
 	if (regSocket.send(tempPacket) == Socket::Status::Done)
 	{
