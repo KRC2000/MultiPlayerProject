@@ -41,6 +41,40 @@ Socket::Status NetworkClient::registerOnServer(IpAddress serverIp, unsigned shor
 	
 }
 
+Socket::Status NetworkClient::receiveConnectedClientsNames(vector<string>& namesVec)
+{
+	if (!regSocket.isBlocking()) regSocket.setBlocking(true);
+
+	Packet tempPacket;
+
+	if (regSocket.receive(tempPacket) == Socket::Status::Done)
+	{
+		if (tempPacket.getDataSize() > 0)
+		{
+			while (!tempPacket.endOfPacket())
+			{
+				string name;
+				if (tempPacket >> name)
+				{
+					namesVec.push_back(name);
+				}
+				else
+				{
+					cout << "(!)receiveConnectedClientsNames() : Failed to read packet\n";
+					return Socket::Status::Error;
+				}
+			}
+			cout << "receiveConnectedClientsNames() :Client names read\n";
+			return Socket::Status::Done;
+
+		}
+		else cout << "(!)receiveConnectedClientsNames(): Receives packet is empty, ensure that packet contains: (string name1 << string name2 << ...) or \"FIRST\" if it's first connected client\n";
+	}
+	else cout << "(!)receiveConnectedClientsNames(): Failed to receive clients names\n";
+
+	return Socket::Status::Error;
+}
+
 Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned short serverRegPort)
 {
 	if (regSocket.connect(serverIp, serverRegPort) == Socket::Status::Done)

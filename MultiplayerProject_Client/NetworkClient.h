@@ -18,11 +18,21 @@ class NetworkClient
 public:
 	NetworkClient();
 
+	/////// Execute these ones ///////
+
 	/*Tries to bind udp data socket to passed port, if failed - endlessly tries to bind any other port
 	Return Status::Done if binded to any port*/
 	Socket::Status init(unsigned short preferablePort);
 
+	/*Setups connection to the server, retrieves and sends needed data to exchange data*/
 	Socket::Status registerOnServer(IpAddress serverIp, unsigned short serverRegPort, string clientName);
+
+	/*Receives and records connected clients names to passed vector*/
+	Socket::Status receiveConnectedClientsNames(vector<string>& namesVec);
+
+	/////// Execute these in main loop ///////
+
+
 
 private:
 	/*Connects registration tcp socket to server registration tcp socket*/
@@ -36,5 +46,6 @@ private:
 	receive port dedicated to this client using this method*/
 	Socket::Status recieveDedicatedDataServerPort();
 
+	
 };
 
