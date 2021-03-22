@@ -111,10 +111,7 @@ Socket::Status NetworkClient::sendData(Packet& dataPacket, IpAddress S_Ip, unsig
 	}
 
 	if (dataSocket.send(dataPacket, S_Ip, S_dataPort) == Socket::Status::Done)
-	{
-		cout << "sendData(): Data was sent\n";
 		return Socket::Status::Done;
-	}
 	else return Socket::Status::NotReady;
 }
 
