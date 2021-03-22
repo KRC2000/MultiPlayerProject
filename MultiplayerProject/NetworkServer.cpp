@@ -4,6 +4,13 @@ NetworkServer::NetworkServer()
 {
 }
 
+Socket::Status NetworkServer::registerNewClients()
+{
+	acceptIncomingConnection();
+	receiveClientRegData();
+	sendDedicatedDataPort();
+}
+
 Socket::Status NetworkServer::acceptIncomingConnection()
 {
 	if (regStep == 0)

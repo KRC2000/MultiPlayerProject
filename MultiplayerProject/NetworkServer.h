@@ -30,6 +30,8 @@ class NetworkServer
 public:
 	NetworkServer();
 
+	Socket::Status registerNewClients();
+
 	/// <summary>
 	/// Listener accepts incoming tcp registration connection.
 	/// Needs to be executed first.
