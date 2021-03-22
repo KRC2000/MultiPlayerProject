@@ -15,7 +15,8 @@ class NetworkServer
 		IpAddress Ip;
 		UdpSocket *dataSocket;
 		unsigned short port;
-		Packet dataPacket;
+		Packet rDataPacket;
+		Packet sDataPacket;
 	};
 	vector<Client> clientsVec;
 
@@ -69,9 +70,20 @@ public:
 	/// {
 	///		Extract received data using clientReceivedFrom->dataPacket >> yourVar;
 	/// }
+	/// Method is NON-blocking.
 	/// </summary>
 	/// <param name="clientReceivedFrom">Pointer for received client record</param>
 	/// <returns>status code</returns>
 	Socket::Status receiveData(Client* clientReceivedFrom);
+
+	/// <summary>
+	/// Use this to broadcast players positions and other data to clients.
+	/// Fill packet with "DATA" and then clientName1  clientsData1  ...  clientName2  clientsData2 
+	/// Method is NON-blocking.
+	/// Packet dataPacket must exist and not be changed as long as this method being called.
+	/// </summary>
+	/// <param name="dataPacket">data to be sended to everyone</param>
+	/// <returns>status code</returns>
+	Socket::Status sendDataToAll(Packet* dataPacket);
 };
 

@@ -130,12 +130,26 @@ Socket::Status NetworkServer::receiveData(Client* clientReceivedFrom)
 		IpAddress tempIp = clientsVec[i].Ip;
 		unsigned short tempPort = clientsVec[i].port;
 
-		if (clientsVec[i].dataSocket->receive(clientsVec[i].dataPacket, tempIp, tempPort) == Socket::Status::Done)
+		if (clientsVec[i].dataSocket->receive(clientsVec[i].rDataPacket, tempIp, tempPort) == Socket::Status::Done)
 		{
 			clientReceivedFrom = &clientsVec[i];
 			return Socket::Status::Done;
 		}
 	}
 
+	return Socket::Status::NotReady;
+}
+
+Socket::Status NetworkServer::sendDataToAll(Packet* dataPacket)
+{
+	for (int i = 0; i < clientsVec.size(); i++)
+	{
+		if (clientsVec[i].dataSocket->isBlocking()) clientsVec[i].dataSocket->setBlocking(false);
+		IpAddress tempIp = clientsVec[i].Ip;
+		unsigned short tempPort = clientsVec[i].port;
+
+		if (clientsVec[i].dataSocket->send(*dataPacket, tempIp, tempPort) == Socket::Status::Done)
+			return Socket::Status::Done;
+	}
 	return Socket::Status::NotReady;
 }
