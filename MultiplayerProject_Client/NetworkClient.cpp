@@ -70,6 +70,11 @@ Socket::Status NetworkClient::receiveConnectedClientsNames(vector<string>& names
 				}
 			}
 			cout << "receiveConnectedClientsNames() :Client names read\n";
+			/*for (int i = 0; i < namesVec.size(); i++)
+			{
+				cout << namesVec[i];
+			}
+			cout << endl;*/
 			return Socket::Status::Done;
 
 		}
@@ -119,7 +124,7 @@ Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned s
 {
 	if (!regSocket.isBlocking()) regSocket.setBlocking(true);
 
-	if (regSocket.connect(serverIp, serverRegPort) == Socket::Status::Done)
+	if (regSocket.connect(serverIp, serverRegPort, seconds(10)) == Socket::Status::Done)
 	{
 		cout << "connectRegTcpSocket(): Connected to server\n";
 		S_Ip = serverIp;

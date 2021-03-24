@@ -3,6 +3,8 @@
 #include <SFML/Network.hpp>
 #include <vector>
 
+#include "NetworkClient.h"
+
 using namespace sf;
 using namespace std;
 
@@ -51,163 +53,69 @@ public:
 
 vector<Player> playersVec;
 
-
-Clock cycleTimer, dataSendTimer;
+Clock cycleTimer;
 Time cycleTime;
 
-UdpSocket dataSocket;
-TcpSocket regSocket;
-Packet sPacket, rPacket;
-IpAddress serverIp;
+IpAddress S_Ip;
+unsigned short S_port;
 string clientName;
-Uint16 regServerPort;
-Uint16 dataServerPort;
+
+NetworkClient netC;
 
 void getUserInputData();
-void loadResources(Texture& t, Font& f);
-void bindSockets();
-void connectRegTcpSocket();
-void sendDataUdpPort();
-void recieveDataServerPort();
-
 
 int main()
 {
 	RenderWindow window(sf::VideoMode(400, 400), "SFML works!");
 
 	Texture t_player;
+	t_player.loadFromFile("tank.png");
 	Font font;
+	font.loadFromFile("8bitOperatorPlus-Regular.ttf");
 
 	getUserInputData();
-
-	loadResources(t_player, font);
 
 	Player player(true);
 	player.load(t_player, font, clientName);
 
 
-	bindSockets();
+	netC.init();
 
-	connectRegTcpSocket();
+	netC.registerOnServer(S_Ip, S_port, clientName);
 
-	sendDataUdpPort();
+	vector<string> namesVec;
+	netC.receiveConnectedClientsNames(namesVec);
 
-	recieveDataServerPort();
-	
-
-	if (regSocket.receive(rPacket) == Socket::Status::Done)
-	{
-		string s;
-		while (!rPacket.endOfPacket())
-		{
-			if (rPacket >> s)
-			{
-				if (s != "FIRST")
-				{
-					Player p;
-					playersVec.push_back(p);
-					playersVec.back().load(t_player, font, s);
-					cout << ">>Created record: " << playersVec.back().name << endl;
-				}
-				else cout << ">>You are first connected client\n";
-			}
-		}
-		rPacket.clear();
-		cout << ">>Successfully received client records" << endl;
-	}
-	else cout << "!!!Failed to receive client records!!!\n";
-
-
-
-
+	Packet receivedDataPacket;
 	
 	while (window.isOpen())
 	{
 		cycleTime = cycleTimer.restart();
 
-		dataSocket.setBlocking(false);
 
-		IpAddress tempIp = serverIp;
-		Uint16 tempPort = dataServerPort;
-		if (dataSocket.receive(rPacket, tempIp, tempPort) == Socket::Status::Done)
+		if (netC.receiveData(receivedDataPacket, S_Ip, S_port) == Socket::Status::Done)
 		{
-			string s;
-			if (!rPacket.endOfPacket())
+			if (receivedDataPacket.getDataSize() > 0)
 			{
-				if (rPacket >> s)
+				string s;
+				if (receivedDataPacket >> s)
 				{
 					if (s == "NEW")
 					{
-						if (rPacket >> s)
+						if (receivedDataPacket >> s)
 						{
-							Player p;
-							playersVec.push_back(p);
-							playersVec.back().load(t_player, font, s);
-							cout << ">>New client connected to the server - " << playersVec.back().name << endl;
-						}
-						else cout << "!!!Reading data error!!!\n";
-					}
-
-					if (s == "DC")
-					{
-						if (rPacket >> s)
-						{
-							for (int i = 0; i < playersVec.size(); i++)
+							if (s != clientName)
 							{
-								if (playersVec[i].name == s)
-								{
-									playersVec.erase(playersVec.begin() + i);
-									break;
-									cout << ">>" << s << " disconnected from the server.\n";
-								}
-							}
-						}
-					}
-
-					if (s == "DATA")
-					{
-						while (!rPacket.endOfPacket())
-						{
-							if (rPacket >> s)
-							{
-								for (int i = 0; i < playersVec.size(); i++)
-								{
-									if (s == playersVec[i].name)
-									{
-										float x, y;
-										rPacket >> x >> y;
-										playersVec[i].setPosition({ x, y });
-										//cout << "c";
-									}
-								}
+								namesVec.push_back(s);
+								cout << "New player connected: " << namesVec.back() << endl;
 							}
 						}
 					}
 				}
-				else cout << "!!!Reading data error!!!\n";
-			}
-			else rPacket.clear();
-		}
-
-		//dataSocket.setBlocking(true);
-		
-		if (dataSendTimer.getElapsedTime().asMilliseconds() > 8)
-		{
-			if (sPacket.getDataSize() == 0)
-			{
-				sPacket << player.getPos().x << player.getPos().y;
-			}
-
-			IpAddress tempIp = serverIp;
-			Uint16 tempPort = dataServerPort;
-			if (dataSocket.send(sPacket, tempIp, tempPort) == Socket::Status::Done)
-			{
-				//cout << "Done: " << dataSendTimer.getElapsedTime().asMilliseconds() << endl;
-				//cout << "Size: " << sPacket.getDataSize() << endl << endl;
-				dataSendTimer.restart();
-				sPacket.clear();
 			}
 		}
+
+
 
 		Event event;
 		while (window.pollEvent(event))
@@ -243,57 +151,15 @@ int main()
 	return 0;
 };
 
-void bindSockets()
-{
-	if (dataSocket.bind(Socket::AnyPort) == sf::Socket::Done)
-		cout << ">>Data socket binded successfully to port: " << dataSocket.getLocalPort() << endl;
-	else cout << "!!!Data socket bind error!!!\n";
-};
-
 void getUserInputData()
 {
 	//cout << "Enter server IP: ";
 	//cin >> serverIp;
-	serverIp = "localhost";
+	S_Ip = "localhost";
 	cout << endl;
 	cout << "Enter server registration port: ";
-	cin >> regServerPort;
+	cin >> S_port;
 	cout << endl;
 	cout << "Enter name: ";
 	cin >> clientName;
-};
-
-void connectRegTcpSocket()
-{
-	if (regSocket.connect(serverIp, regServerPort) == Socket::Status::Done)
-		cout << ">>Registration socket connected to server!\n";
-	else cout << "!!!Registration socket connection error!!!\n";
-};
-
-void sendDataUdpPort()
-{
-	sPacket << dataSocket.getLocalPort() << clientName;
-	if (regSocket.send(sPacket) == Socket::Status::Done)
-		cout << ">>Successfully sent data udp socket port to server\n";
-	else cout << "!!!Sending data udp socket port to server failed!!!\n";
-
-	sPacket.clear();
-};
-
-void loadResources(Texture& t, Font& f)
-{
-	t.loadFromFile("tank.png");
-	f.loadFromFile("8bitOperatorPlus-Regular.ttf");
-};
-
-void recieveDataServerPort()
-{
-	if (regSocket.receive(rPacket) == Socket::Status::Done)
-	{
-		rPacket >> dataServerPort;
-		cout << ">>Successfully received data dedicated socket port of a server: " << dataServerPort << endl;
-	}
-	else cout << "!!!Failed to receive dedicated data socket port of a server!!!\n";
-
-	rPacket.clear();
 };

@@ -17,6 +17,7 @@ class NetworkServer
 		unsigned short port;
 		Packet rDataPacket;
 		Packet sDataPacket;
+		bool done = false;
 	};
 	vector<Client> clientsVec;
 
@@ -29,6 +30,8 @@ class NetworkServer
 
 public:
 	NetworkServer();
+
+	Socket::Status init();
 
 	Socket::Status registerNewClients();
 
@@ -48,6 +51,8 @@ public:
 	/// </summary>
 	/// <returns>status code</returns>
 	Socket::Status receiveClientRegData();
+
+	Socket::Status sendNewClientDataToAll();
 
 	/// <summary>
 	/// Sends to client port of a udp socket that dedicated for connecting with this client.
