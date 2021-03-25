@@ -96,6 +96,8 @@ Socket::Status NetworkServer::receiveClientRegData()
 
 			cout << "receiveClientRegData(): Client registration data received. New client: " << clientsVec.back().name << endl;
 			regStep = 2;
+			for (int i = 0; i < clientsVec.size() - 1; i++)
+				clientsVec[i].done = false;
 			packet.clear();
 			return Socket::Status::Done;
 		}
@@ -122,8 +124,8 @@ Socket::Status NetworkServer::sendNewClientDataToAll()
 
 					if (clientsVec[i].dataSocket->send(clientsVec[i].sDataPacket, tempIp, tempPort) == Socket::Status::Done)
 					{
-						cout << "piu";
 						clientsVec[i].done = true;
+
 						bool allIsDone = true;
 						for (int k = 0; k < clientsVec.size() - 1; k++)
 						{
@@ -133,8 +135,8 @@ Socket::Status NetworkServer::sendNewClientDataToAll()
 						{
 							for (int j = 0; j < clientsVec.size(); j++)
 							{
-								clientsVec[j].done = false;
 								clientsVec[j].sDataPacket.clear();
+								clientsVec[j].done = false;
 							}
 							regStep = 3;
 							return Socket::Status::Done;
@@ -176,7 +178,6 @@ Socket::Status NetworkServer::sendConnectedClientsRecords()
 {
 	if (regStep == 4)
 	{
-		cout << "Bip";
 		if (regSocket.isBlocking()) regSocket.setBlocking(false);
 
 		if (packet.getDataSize() == 0)
@@ -200,7 +201,7 @@ Socket::Status NetworkServer::sendConnectedClientsRecords()
 	}
 }
 
-Socket::Status NetworkServer::receiveData(Client* clientReceivedFrom)
+Socket::Status NetworkServer::receiveData(unsigned int& receivedClientIndex)
 {
 	for (int i = 0; i < clientsVec.size(); i++)
 	{
@@ -210,7 +211,8 @@ Socket::Status NetworkServer::receiveData(Client* clientReceivedFrom)
 
 		if (clientsVec[i].dataSocket->receive(clientsVec[i].rDataPacket, tempIp, tempPort) == Socket::Status::Done)
 		{
-			clientReceivedFrom = &clientsVec[i];
+			receivedClientIndex = i;
+			
 			return Socket::Status::Done;
 		}
 	}
@@ -218,16 +220,47 @@ Socket::Status NetworkServer::receiveData(Client* clientReceivedFrom)
 	return Socket::Status::NotReady;
 }
 
-Socket::Status NetworkServer::sendDataToAll(Packet* dataPacket)
+Socket::Status NetworkServer::sendDataToAll(Packet dataPacket)
 {
-	for (int i = 0; i < clientsVec.size(); i++)
+	if (sendingsRateTimer.getElapsedTime().asMilliseconds() > sendingsRate)
 	{
-		if (clientsVec[i].dataSocket->isBlocking()) clientsVec[i].dataSocket->setBlocking(false);
-		IpAddress tempIp = clientsVec[i].Ip;
-		unsigned short tempPort = clientsVec[i].port;
+		for (int i = 0; i < clientsVec.size(); i++)
+		{
+			if (!clientsVec[i].done)
+			{
+				if (clientsVec[i].dataSocket->isBlocking()) clientsVec[i].dataSocket->setBlocking(false);
+				IpAddress tempIp = clientsVec[i].Ip;
+				unsigned short tempPort = clientsVec[i].port;
 
-		if (clientsVec[i].dataSocket->send(*dataPacket, tempIp, tempPort) == Socket::Status::Done)
-			return Socket::Status::Done;
+				if (clientsVec[i].sDataPacket.getDataSize() == 0) clientsVec[i].sDataPacket = dataPacket;
+
+				if (clientsVec[i].dataSocket->send(clientsVec[i].sDataPacket, tempIp, tempPort) == Socket::Status::Done)
+				{
+					clientsVec[i].done = true;
+				}
+
+				bool allIsDone = true;
+
+				for (int j = 0; j < clientsVec.size(); j++)
+				{
+					if (clientsVec[j].done == false) allIsDone = false;
+				}
+
+				if (allIsDone)
+				{
+					for (int j = 0; j < clientsVec.size(); j++)
+					{
+						clientsVec[j].sDataPacket.clear();
+						clientsVec[j].done = false;
+					}
+					sendingsRateTimer.restart();
+					return Socket::Status::Done;
+				}
+			}
+
+		}
+		return Socket::Status::NotReady;
+
 	}
-	return Socket::Status::NotReady;
+	else return Socket::Status::NotReady;
 }

@@ -63,6 +63,7 @@ string clientName;
 NetworkClient netC;
 
 void getUserInputData();
+void addPlayer(Texture& t_player, Font& font, string clientName);
 
 int main()
 {
@@ -85,13 +86,20 @@ int main()
 
 	vector<string> namesVec;
 	netC.receiveConnectedClientsNames(namesVec);
+	for (int i = 0; i < namesVec.size(); i++)
+	{
+		addPlayer(t_player, font, namesVec[i]);
+	}
 
 	Packet receivedDataPacket;
+	Packet sendDataPacket;
+
+	sendDataPacket << "DATA" << player.getPos().x << player.getPos().y;
+
 	
 	while (window.isOpen())
 	{
 		cycleTime = cycleTimer.restart();
-
 
 		if (netC.receiveData(receivedDataPacket, S_Ip, S_port) == Socket::Status::Done)
 		{
@@ -106,14 +114,38 @@ int main()
 						{
 							if (s != clientName)
 							{
-								namesVec.push_back(s);
-								cout << "New player connected: " << namesVec.back() << endl;
+								addPlayer(t_player, font, s);
+								cout << "New player connected: " << playersVec.back().name << endl;
+							}
+						}
+					}
+					if (s == "DATA")
+					{
+						while (!receivedDataPacket.endOfPacket())
+						{
+							float x, y;
+							receivedDataPacket >> s;
+							receivedDataPacket >> x;
+							receivedDataPacket >> y;
+							//cout << x << " " << y << endl;
+							for (int i = 0; i < playersVec.size(); i++)
+							{
+								if (s == playersVec[i].name)
+									playersVec[i].setPosition({ x, y });
 							}
 						}
 					}
 				}
 			}
 		}
+
+		if (netC.sendData(sendDataPacket) == Socket::Status::Done)
+		{
+			sendDataPacket.clear();
+			sendDataPacket << "DATA" << player.getPos().x << player.getPos().y;
+			//cout << "DATA" << player.getPos().x << player.getPos().y;
+		}
+
 
 
 
@@ -162,4 +194,11 @@ void getUserInputData()
 	cout << endl;
 	cout << "Enter name: ";
 	cin >> clientName;
+};
+
+void addPlayer(Texture& t_player, Font& font, string clientName)
+{
+	Player p;
+	playersVec.push_back(p);
+	playersVec.back().load(t_player, font, clientName);
 };

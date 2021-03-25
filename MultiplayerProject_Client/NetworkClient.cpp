@@ -9,7 +9,10 @@ Socket::Status NetworkClient::init(unsigned short preferablePort)
 	Socket::Status status = dataSocket.bind(preferablePort);
 
 	if (status == Socket::Status::Done)
+	{
+		cout << "init(): Successfully binded to port: " << dataSocket.getLocalPort() << endl;
 		return Socket::Status::Done;
+	}
 	else
 	{
 		cout << "(!)init(): Failed to bind passed preferred port\n";
@@ -93,7 +96,7 @@ Socket::Status NetworkClient::receiveData(Packet& dataPacket, IpAddress S_Ip, un
 	{
 		if (dataPacket.getDataSize() > 0)
 		{
-			cout << "receiveData(): Data received\n";
+			//cout << "receiveData(): Data received\n";
 			return Socket::Status::Done;
 		}
 		else
@@ -105,18 +108,29 @@ Socket::Status NetworkClient::receiveData(Packet& dataPacket, IpAddress S_Ip, un
 	return Socket::Status::NotReady;
 }
 
-Socket::Status NetworkClient::sendData(Packet& dataPacket, IpAddress S_Ip, unsigned short S_dataPort)
+Socket::Status NetworkClient::sendData(Packet& dataPacket)
 {
-	if (dataSocket.isBlocking())dataSocket.setBlocking(false);
-
-	if (dataPacket.getDataSize() < 1)
+	if (sendRateTimer.getElapsedTime().asMilliseconds() > sendRate)
 	{
-		cout << "(!)sendData(): Error, packet is empty\n";
-		return Socket::Status::Error;
-	}
+		if (dataSocket.isBlocking())dataSocket.setBlocking(false);
 
-	if (dataSocket.send(dataPacket, S_Ip, S_dataPort) == Socket::Status::Done)
-		return Socket::Status::Done;
+		if (dataPacket.getDataSize() == 0)
+		{
+			cout << "(!)sendData(): Error, packet is empty\n";
+			return Socket::Status::Error;
+		}
+		/*cout << dataPacket.getDataSize() << endl;
+		cout << S_Ip << endl;
+		cout << S_dataPort << endl;*/
+		IpAddress tempIp = S_Ip;
+		unsigned short tempDataPort = S_dataPort;
+		if (dataSocket.send(dataPacket, tempIp, tempDataPort) == Socket::Status::Done)
+		{
+			sendRateTimer.restart();
+			return Socket::Status::Done;
+		}
+		else return Socket::Status::NotReady;
+	}
 	else return Socket::Status::NotReady;
 }
 

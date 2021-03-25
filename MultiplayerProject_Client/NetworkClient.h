@@ -12,6 +12,9 @@ class NetworkClient
 	UdpSocket dataSocket;
 	TcpSocket regSocket;
 
+	Clock sendRateTimer;
+	Uint16 sendRate = 2;
+
 	IpAddress S_Ip;
 	unsigned short S_regPort;
 	unsigned short S_dataPort;
@@ -57,7 +60,7 @@ public:
 	/// <param name="S_Ip"> ServerIp address</param>
 	/// <param name="S_dataPort">Server data port for connection with this client</param>
 	/// <returns>status code</returns>
-	Socket::Status sendData(Packet& dataPacket, IpAddress S_Ip, unsigned short S_dataPort);
+	Socket::Status sendData(Packet& dataPacket);
 
 private:
 	/*Connects registration tcp socket to server registration tcp socket*/
