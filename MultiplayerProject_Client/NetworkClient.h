@@ -51,16 +51,12 @@ public:
 
 
 	/// <summary>
-	/// Sends passed packet to server's udp socket dedicated for connection with this client.
+	/// Sends copy of passed packet to server's udp socket dedicated for connection with this client.
 	/// Sending is NON-blocking.
 	/// If Status::Done returned, packet was sent.
-	/// Packet dataPacket must exist as long as this method being called.
-	/// Use this method to send player location, rotation, events - by sending "SHOOT"(for example) message, so that
-	/// server can create bullet fired by you and calculate it.
+	/// Use this method to send player location, rotation, events - by using event codes - numbers or strings
 	/// </summary>
 	/// <param name="dataPacket">Packet to sent</param>
-	/// <param name="S_Ip"> ServerIp address</param>
-	/// <param name="S_dataPort">Server data port for connection with this client</param>
 	/// <returns>status code</returns>
 	Socket::Status sendData(Packet dataPacket);
 
