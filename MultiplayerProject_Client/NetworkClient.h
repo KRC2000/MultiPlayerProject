@@ -15,7 +15,7 @@ class NetworkClient
 	Packet sendPacket;
 
 	Clock sendRateTimer;
-	Uint16 sendRate = 2;
+	Int16 sendRate = 2;
 
 	IpAddress S_Ip;
 	unsigned short S_regPort;
@@ -53,13 +53,20 @@ public:
 	/// <summary>
 	/// Sends copy of passed packet to server's udp socket dedicated for connection with this client.
 	/// Sending is NON-blocking.
-	/// If Status::Done returned, packet was sent.
 	/// Use this method to send player location, rotation, events - by using event codes - numbers or strings
+	/// To change default frequency see setSendFreq();
+	/// If Status::Done returned, packet was sent.
 	/// </summary>
 	/// <param name="dataPacket">Packet to sent</param>
 	/// <returns>status code</returns>
 	Socket::Status sendData(Packet dataPacket);
 
+
+	/// <summary>
+	/// Set sentData() send frequency 
+	/// </summary>
+	/// <param name="milliseconds">idle time between send calls in milliseconds</param>
+	void setSendFreq(Int32 milliseconds);
 private:
 	/*Connects registration tcp socket to server registration tcp socket*/
 	Socket::Status connectRegTcpSocket(IpAddress serverIp, unsigned short serverRegPort);

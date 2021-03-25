@@ -129,6 +129,11 @@ Socket::Status NetworkClient::sendData(Packet dataPacket)
 	else return Socket::Status::NotReady;
 }
 
+void NetworkClient::setSendFreq(Int32 milliseconds)
+{
+	sendRate = milliseconds;
+}
+
 Socket::Status NetworkClient::connectRegTcpSocket(IpAddress serverIp, unsigned short serverRegPort)
 {
 	if (!regSocket.isBlocking()) regSocket.setBlocking(true);
