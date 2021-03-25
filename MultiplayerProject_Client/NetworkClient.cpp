@@ -108,24 +108,19 @@ Socket::Status NetworkClient::receiveData(Packet& dataPacket, IpAddress S_Ip, un
 	return Socket::Status::NotReady;
 }
 
-Socket::Status NetworkClient::sendData(Packet& dataPacket)
+Socket::Status NetworkClient::sendData(Packet dataPacket)
 {
 	if (sendRateTimer.getElapsedTime().asMilliseconds() > sendRate)
 	{
 		if (dataSocket.isBlocking())dataSocket.setBlocking(false);
+		
+		if (sendPacket.getDataSize() == 0) sendPacket = dataPacket;
 
-		if (dataPacket.getDataSize() == 0)
-		{
-			cout << "(!)sendData(): Error, packet is empty\n";
-			return Socket::Status::Error;
-		}
-		/*cout << dataPacket.getDataSize() << endl;
-		cout << S_Ip << endl;
-		cout << S_dataPort << endl;*/
 		IpAddress tempIp = S_Ip;
 		unsigned short tempDataPort = S_dataPort;
-		if (dataSocket.send(dataPacket, tempIp, tempDataPort) == Socket::Status::Done)
+		if (dataSocket.send(sendPacket, tempIp, tempDataPort) == Socket::Status::Done)
 		{
+			sendPacket.clear();
 			sendRateTimer.restart();
 			return Socket::Status::Done;
 		}

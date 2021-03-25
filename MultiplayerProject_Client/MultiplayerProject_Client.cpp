@@ -94,7 +94,6 @@ int main()
 	Packet receivedDataPacket;
 	Packet sendDataPacket;
 
-	sendDataPacket << "DATA" << player.getPos().x << player.getPos().y;
 
 	
 	while (window.isOpen())
@@ -127,7 +126,6 @@ int main()
 							receivedDataPacket >> s;
 							receivedDataPacket >> x;
 							receivedDataPacket >> y;
-							//cout << x << " " << y << endl;
 							for (int i = 0; i < playersVec.size(); i++)
 							{
 								if (s == playersVec[i].name)
@@ -139,12 +137,10 @@ int main()
 			}
 		}
 
-		if (netC.sendData(sendDataPacket) == Socket::Status::Done)
-		{
-			sendDataPacket.clear();
-			sendDataPacket << "DATA" << player.getPos().x << player.getPos().y;
-			//cout << "DATA" << player.getPos().x << player.getPos().y;
-		}
+		sendDataPacket.clear();
+		sendDataPacket << "DATA" << player.getPos().x << player.getPos().y;
+
+		netC.sendData(sendDataPacket);
 
 
 
