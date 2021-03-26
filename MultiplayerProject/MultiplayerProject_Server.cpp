@@ -13,11 +13,9 @@ NetworkServer netS;
 
 int main()
 {
-
-	
 	netS.init();
 	
-	//Client* client = nullptr;
+
 	Packet packet;
 	packet << "DATA";
 	for (int i = 0; i < netS.clientsVec.size(); i++)
@@ -44,7 +42,6 @@ int main()
 		unsigned int receivedClientIndex;
 		if (netS.receiveData(receivedClientIndex) == Socket::Status::Done)
 		{
-			//cout << receivedClientIterator;
 			if (netS.clientsVec[receivedClientIndex].rDataPacket.getDataSize() > 0)
 			{
 				string s;
@@ -61,7 +58,6 @@ int main()
 						{
 							netS.clientsVec[receivedClientIndex].pos.y = y;
 						}
-						//cout << x << "  " << y << endl;
 						netS.clientsVec[receivedClientIndex].rDataPacket.clear();
 					}
 				}

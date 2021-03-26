@@ -18,22 +18,24 @@ public:
 	string name;
 
 	Player(bool possesed = false):possesed(possesed) {};
-	void load(Texture& texture, Font& font, string playerName)
+	void load(Texture& texture, Font& font)
 	{
 		body.setTexture(texture);
+		body.setTextureRect(IntRect(0, 0, texture.getSize().x / 4, texture.getSize().y / 4));
+		body.setScale(2, 2);
 		if (!possesed) body.setColor(Color::Red);
 		netGhost.setTexture(texture);
-		name = playerName;
+		//name = playerName;
 
 		t.setFont(font);
 		t.setString(name);
-		//t.setCharacterSize(24);
 		t.setFillColor(sf::Color::Red);
+		t.setPosition(body.getGlobalBounds().width / 2 - t.getGlobalBounds().width / 2, body.getPosition().y - t.getGlobalBounds().height);
 	};
 	void setPosition(Vector2f newPos)
 	{
 		body.setPosition(newPos);
-		t.setPosition(newPos);
+		t.setPosition(newPos.x + body.getGlobalBounds().width / 2 - t.getGlobalBounds().width / 2, body.getPosition().y - t.getGlobalBounds().height);
 	};
 	void move(Vector2f normalizedMovementVec, Time cycleTime)
 	{
@@ -62,27 +64,30 @@ string clientName;
 
 NetworkClient netC;
 
-void getUserInputData();
+Player player(true);
+
+void getUserInputData(string& playerName);
 void addPlayer(Texture& t_player, Font& font, string clientName);
 
 int main()
 {
 	RenderWindow window(sf::VideoMode(400, 400), "SFML works!");
 
+
 	Texture t_player;
-	t_player.loadFromFile("tank.png");
+	t_player.loadFromFile("indianajones.png");
 	Font font;
 	font.loadFromFile("8bitOperatorPlus-Regular.ttf");
 
-	getUserInputData();
+	
+	getUserInputData(player.name);
+	player.load(t_player, font);
 
-	Player player(true);
-	player.load(t_player, font, clientName);
+
 
 
 	netC.init();
-
-	netC.registerOnServer(S_Ip, S_port, clientName);
+	netC.registerOnServer(S_Ip, S_port, player.name);
 
 	vector<string> namesVec;
 	netC.receiveConnectedClientsNames(namesVec);
@@ -139,7 +144,6 @@ int main()
 
 		sendDataPacket.clear();
 		sendDataPacket << "DATA" << player.getPos().x << player.getPos().y;
-
 		netC.sendData(sendDataPacket);
 
 
@@ -150,8 +154,8 @@ int main()
 		{
 			if (event.type == sf::Event::Closed)
 				window.close();
-			if (event.type == Event::KeyPressed) {}
 		}
+
 		if (window.hasFocus())
 		{
 			if (Keyboard::isKeyPressed(Keyboard::W))
@@ -179,7 +183,7 @@ int main()
 	return 0;
 };
 
-void getUserInputData()
+void getUserInputData(string& playerName)
 {
 	//cout << "Enter server IP: ";
 	//cin >> serverIp;
@@ -189,12 +193,13 @@ void getUserInputData()
 	cin >> S_port;
 	cout << endl;
 	cout << "Enter name: ";
-	cin >> clientName;
+	cin >> playerName;
 };
 
 void addPlayer(Texture& t_player, Font& font, string clientName)
 {
 	Player p;
 	playersVec.push_back(p);
-	playersVec.back().load(t_player, font, clientName);
+	playersVec.back().name = clientName;
+	playersVec.back().load(t_player, font);
 };
