@@ -1,5 +1,8 @@
 # MultiPlayerProject
 
+!!!WARNING!!!
+I made this when I was a clueless teen. This code is no good! Use this only to get ideas of how to use SFML network stuff. 
+
  This is my client-server-client base for future multiplayer projects. It builds using SFML/Network module. It's in development state.
 
 Currently contains server and client apps. Server can handle endless client numbers(as much as memory or sockets count will allow). 
